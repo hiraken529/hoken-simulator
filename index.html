@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>公的保障シミュレーター</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;
+ background:#f3f6fa;
+ font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+ color:#243247;
+}
+header{
+ background:#17365d;
+ color:white;
+ padding:22px;
+ text-align:center;
+}
+header h1{font-size:21px;margin:0}
+header p{font-size:12px;margin:8px 0 0}
+main{max-width:850px;margin:auto;padding:15px}
+.card{
+ background:white;
+ border-radius:12px;
+ padding:20px;
+ margin-bottom:16px;
+ box-shadow:0 2px 8px #00000010;
+}
+h2{
+ font-size:18px;
+ color:#17365d;
+ border-bottom:2px solid #e5ebf2;
+ padding-bottom:10px;
+}
+label{
+ display:block;
+ font-size:14px;
+ margin:13px 0 5px;
+}
+input,select{
+ width:100%;
+ padding:12px;
+ border:1px solid #ccd5df;
+ border-radius:7px;
+ font-size:16px;
+ background:white;
+}
+button{
+ border:0;
+ border-radius:8px;
+ padding:13px;
+ font-size:15px;
+ font-weight:bold;
+ cursor:pointer;
+}
+.primary{background:#1767b1;color:white;width:100%}
+.secondary{background:#e7edf5;color:#17365d}
+.danger{background:#fff0f0;color:#b32626}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.result{
+ background:#edf5ff;
+ border-radius:10px;
+ padding:15px;
+ margin:12px 0;
+}
+.amount{
+ font-size:26px;
+ font-weight:bold;
+ color:#1767b1;
+}
+.shortage{color:#c0392b}
+.note{font-size:12px;color:#64748b;line-height:1.7}
+.bar{
+ height:18px;
+ background:#e5eaf0;
+ border-radius:10px;
+ overflow:hidden;
+ margin:8px 0 18px;
+}
+.fill{height:100%;background:#2474bd;width:0}
+.hidden{display:none}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.actions button{flex:1}
+@media(max-width:500px){
+ .row{grid-template-columns:1fr}
+}
+@media print{
+ header,.no-print{display:none!important}
+ body{background:white}
+ .card{box-shadow:none;border:1px solid #ddd}
+}
+</style>
+</head>
+
+<body>
+<header>
+<h1>公的保障・必要保障額シミュレーター</h1>
+<p>遺族保障・障害保障・保障不足額の確認</p>
+</header>
+
+<main>
+
+<section class="card no-print">
+<h2>顧客情報</h2>
+
+<label>顧客名（任意・管理用ID推奨）</label>
+<input id="name" placeholder="例：顧客001">
+
+<div class="row">
+<div>
+<label>本人年齢</label>
+<input id="age" type="number" value="35" min="0">
+</div>
+<div>
+<label>年収（万円）</label>
+<input id="income" type="number" value="700" min="0">
+</div>
+</div>
+
+<label>職業</label>
+<select id="job">
+<option value="employee">会社員・公務員</option>
+<option value="self">自営業</option>
+</select>
+
+<div class="row">
+<div>
+<label>配偶者の有無</label>
+<select id="spouse">
+<option value="yes">あり</option>
+<option value="no">なし</option>
+</select>
+</div>
+<div>
+<label>子供の人数</label>
+<input id="children" type="number" value="2" min="0">
+</div>
+</div>
+</section>
+
+<section class="card">
+<h2>① 遺族保障シミュレーション</h2>
+
+<p class="note">
+公的遺族年金の月額見込みを入力してください。
+正式な受給額は加入履歴や家族構成などによって異なります。
+</p>
+
+<label>遺族年金（月額・万円）</label>
+<input id="survivorPension" type="number"
+value="15" min="0" step="0.1">
+
+<label>死亡後に必要な生活費（月額・万円）</label>
+<input id="survivorCost" type="number"
+value="30" min="0" step="0.1">
+
+<label>遺族の手取り収入（月額・万円）</label>
+<input id="survivorIncome" type="number"
+value="10" min="0" step="0.1">
+
+<label>既契約の収入保障保険など（月額・万円）</label>
+<input id="survivorInsurance" type="number"
+value="0" min="0" step="0.1">
+
+<label>保障が必要な期間（年）</label>
+<input id="survivorYears" type="number"
+value="20" min="1">
+
+<div class="result">
+<div>毎月の不足額</div>
+<div class="amount shortage" id="survivorShortage">－</div>
+</div>
+
+<div class="result">
+<div>必要死亡保障額（単純累計）</div>
+<div class="amount" id="deathNeed">－</div>
+</div>
+
+<p class="note">
+将来の年金減額、教育費、物価変動、運用利回り等は
+この簡易計算には含まれていません。
+</p>
+</section>
+
+<section class="card">
+<h2>② 障害保障シミュレーション</h2>
+
+<label>障害等級</label>
+<select id="grade">
+<option value="1">1級</option>
+<option value="2">2級</option>
+<option value="3">3級</option>
+</select>
+
+<p class="note" id="gradeNote"></p>
+
+<label>障害年金（月額・万円）</label>
+<input id="disabilityPension" type="number"
+value="15" min="0" step="0.1">
+
+<label>障害状態で必要な生活費（月額・万円）</label>
+<input id="disabilityCost" type="number"
+value="30" min="0" step="0.1">
+
+<label>本人の就労手取り収入（月額・万円）</label>
+<input id="workIncome" type="number"
+value="5" min="0" step="0.1">
+
+<label>配偶者の手取り収入（月額・万円）</label>
+<input id="spouseIncome" type="number"
+value="0" min="0" step="0.1">
+
+<label>追加の医療・介護費（月額・万円）</label>
+<input id="medicalCost" type="number"
+value="3" min="0" step="0.1">
+
+<label>民間の就業不能保険給付（月額・万円）</label>
+<input id="disabilityInsurance" type="number"
+value="0" min="0" step="0.1">
+
+<div class="result">
+<div>障害状態での毎月の不足額</div>
+<div class="amount shortage" id="disabilityShortage">－</div>
+</div>
+
+<div class="result">
+<div>年間不足額</div>
+<div class="amount" id="disabilityYear">－</div>
+</div>
+</section>
+
+<section class="card">
+<h2>③ 保障の充足状況</h2>
+
+<p>遺族保障の充足率</p>
+<div class="bar"><div class="fill" id="survivorBar"></div></div>
+
+<p>障害保障の充足率</p>
+<div class="bar"><div class="fill" id="disabilityBar"></div></div>
+
+<p class="note">
+充足率は、入力された月額支出に対して
+入力された収入・給付が占める割合です。
+</p>
+</section>
+
+<section class="card no-print">
+<h2>④ 顧客データ管理</h2>
+
+<div class="actions">
+<button class="primary" onclick="calculate()">再計算</button>
+<button class="secondary" onclick="saveData()">保存</button>
+<button class="secondary" onclick="window.print()">PDF印刷</button>
+</div>
+
+<label>保存済みデータ</label>
+<select id="savedList"></select>
+
+<div class="actions" style="margin-top:10px">
+<button class="secondary" onclick="loadData()">呼び出す</button>
+<button class="danger" onclick="deleteData()">削除</button>
+</div>
+
+<p class="note">
+データはこのブラウザ内に保存されます。
+暗号化されていないため、実際の顧客の個人情報は
+入力しないでください。
+ブラウザのデータ消去等で失われる可能性があります。
+</p>
+</section>
+
+<section class="card">
+<h2>ご利用上の注意</h2>
+<p class="note">
+本ツールは保険提案の構成確認を目的とした試作版です。
+公的年金の受給額を自動算定するものではありません。
+障害年金の受給には初診日、保険料納付要件、
+障害認定基準等の確認が必要です。
+受給資格や金額を保証するものではありません。
+</p>
+</section>
+
+</main>
+
+<script>
+const ids=[
+"name","age","income","job","spouse","children",
+"survivorPension","survivorCost",
+"survivorIncome","survivorInsurance",
+"survivorYears","grade","disabilityPension",
+"disabilityCost","workIncome","spouseIncome",
+"medicalCost","disabilityInsurance"
+];
+
+function number(id){
+ const v=Number(document.getElementById(id).value);
+ return Number.isFinite(v)?Math.max(0,v):0;
+}
+
+function money(v){
+ return v.toLocaleString("ja-JP",{
+ maximumFractionDigits:1
+ })+"万円";
+}
+
+function calculate(){
+ const sp=number("survivorPension");
+ const sc=number("survivorCost");
+ const si=number("survivorIncome");
+ const ins=number("survivorInsurance");
+ const years=number("survivorYears");
+
+ const survivorAvailable=sp+si+ins;
+ const survivorGap=Math.max(0,sc-survivorAvailable);
+
+ document.getElementById("survivorShortage")
+ .textContent=money(survivorGap);
+
+ document.getElementById("deathNeed")
+ .textContent=money(survivorGap*12*years);
+
+ const dp=number("disabilityPension");
+ const dc=number("disabilityCost");
+ const wi=number("workIncome");
+ const swi=number("spouseIncome");
+ const mc=number("medicalCost");
+ const di=number("disabilityInsurance");
+
+ const disabilityNeed=dc+mc;
+ const disabilityAvailable=dp+wi+swi+di;
+ const disabilityGap=Math.max(
+ 0,disabilityNeed-disabilityAvailable
+ );
+
+ document.getElementById("disabilityShortage")
+ .textContent=money(disabilityGap);
+
+ document.getElementById("disabilityYear")
+ .textContent=money(disabilityGap*12);
+
+ const sr=sc>0?
+ Math.min(100,survivorAvailable/sc*100):100;
+
+ const dr=disabilityNeed>0?
+ Math.min(100,disabilityAvailable/disabilityNeed*100):100;
+
+ document.getElementById("survivorBar")
+ .style.width=sr+"%";
+
+ document.getElementById("disabilityBar")
+ .style.width=dr+"%";
+
+ const grade=document.getElementById("grade").value;
+ const job=document.getElementById("job").value;
+
+ let note="障害等級は年金制度上の等級です。";
+
+ if(grade==="3"&&job==="self"){
+ note="注意：国民年金のみの加入者には、原則として障害年金3級の給付はありません。";
+ }
+
+ document.getElementById("gradeNote")
+ .textContent=note;
+}
+
+function getRecords(){
+ try{
+ return JSON.parse(
+ localStorage.getItem("hokenRecords")||"{}"
+ );
+ }catch(e){return {}}
+}
+
+function saveData(){
+ const name=document.getElementById("name").value.trim();
+
+ if(!name){
+ alert("管理用IDを入力してください");
+ return;
+ }
+
+ const records=getRecords();
+ const data={};
+
+ ids.forEach(id=>{
+ data[id]=document.getElementById(id).value;
+ });
+
+ records[name]=data;
+
+ try{
+ localStorage.setItem(
+ "hokenRecords",JSON.stringify(records)
+ );
+ alert("保存しました");
+ refreshList();
+ }catch(e){
+ alert("保存できませんでした");
+ }
+}
+
+function refreshList(){
+ const list=document.getElementById("savedList");
+ const records=getRecords();
+
+ list.innerHTML="";
+
+ Object.keys(records).forEach(name=>{
+ const option=document.createElement("option");
+ option.value=name;
+ option.textContent=name;
+ list.appendChild(option);
+ });
+}
+
+function loadData(){
+ const name=document.getElementById("savedList").value;
+ const records=getRecords();
+
+ if(!records[name])return;
+
+ ids.forEach(id=>{
+ if(records[name][id]!==undefined){
+ document.getElementById(id).value=records[name][id];
+ }
+ });
+
+ calculate();
+}
+
+function deleteData(){
+ const name=document.getElementById("savedList").value;
+ if(!name)return;
+
+ if(!confirm("このデータを削除しますか？"))return;
+
+ const records=getRecords();
+ delete records[name];
+
+ localStorage.setItem(
+ "hokenRecords",JSON.stringify(records)
+ );
+
+ refreshList();
+}
+
+ids.forEach(id=>{
+ document.getElementById(id)
+ .addEventListener("input",calculate);
+});
+
+refreshList();
+calculate();
+</script>
+</body>
+</html>
