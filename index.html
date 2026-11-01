@@ -236,9 +236,11 @@ value="0" min="0" step="0.1">
 <h2>③ 保障の充足状況</h2>
 
 <p>遺族保障の充足率</p>
+<div class="amount" id="survivorPercent">－</div>
 <div class="bar"><div class="fill" id="survivorBar"></div></div>
 
 <p>障害保障の充足率</p>
+<div class="amount" id="disabilityPercent">－</div>
 <div class="bar"><div class="fill" id="disabilityBar"></div></div>
 
 <p class="note">
@@ -346,7 +348,8 @@ function calculate(){
 
  const dr=disabilityNeed>0?
  Math.min(100,disabilityAvailable/disabilityNeed*100):100;
-
+document.getElementById("survivorPercent").textContent = sr.toFixed(1) + "%";
+document.getElementById("disabilityPercent").textContent = dr.toFixed(1) + "%";
  document.getElementById("survivorBar")
  .style.width=sr+"%";
 
